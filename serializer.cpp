@@ -78,12 +78,21 @@ Hashmap<int> deserializeFromFile(const string& path) {
             reinterpret_cast<char*>(&key_len),
             sizeof(key_len)
         );
+        if (!in.good()) {
+            throw std::runtime_error("deserializeFromFile: truncated key_len at entry " + std::to_string(i));
+        }
 
         string key(key_len, '\0');
         in.read(key.data(), key_len);
+        if (in.gcount() != static_cast<std::streamsize>(key_len)) {
+            throw std::runtime_error("deserializeFromFile: truncated key bytes at entry " + std::to_string(i));
+        }
 
         int val = 0;
         in.read(reinterpret_cast<char*>(&val), sizeof(val));
+        if (in.gcount() != sizeof(val)) {
+            throw std::runtime_error("deserializeFromFile: truncated value at entry " + std::to_string(i));
+        }
 
         map.put(key, val);
     }
